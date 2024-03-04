@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Produktionshändelser</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        background-color: #1f1f1f;
+        color: #fff;
+        margin: 0;
+        padding: 0;
+    }
+    .container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #222;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+    .logo {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .logo img {
+        width: 300px;
+        height: auto;
+    }
+    h1, h2, h3 {
+        color: #fff;
+        text-align: center;
+    }
+    button, .reset-button {
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        padding: 10px 20px;
+        margin: 5px 0;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        background-color: #333;
+        color: #fff;
+        display: block;
+        width: 100%;
+    }
+    .reset-button {
+        background-color: #40B0FF;
+    }
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    button:hover {
+        background-color: #555;
+    }
+    input[type="text"], input[type="date"] {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0 15px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        box-sizing: border-box;
+    }
+    .countDisplay, .infoDisplay {
+        text-align: center;
+        margin: 10px 0;
+    }
+    .summary {
+        background-color: #333;
+        color: #fff;
+        padding: 20px;
+        margin-top: 20px;
+        border-radius: 8px;
+    }
+    /* Stilar för färgskiftning */
+    .green { color: green; }
+    .orange { color: orange; }
+    .red { color: red; }
+    .numberColor {
+        color: #FF0000; /* Exempel: En orange färg */
+    }
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCPU86cSR2O2N8XvEYvAbBY6XVp-jfFang",
+    authDomain: "carlsberg-1395b.firebaseapp.com",
+    databaseURL: "https://carlsberg-1395b-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "carlsberg-1395b",
+    storageBucket: "carlsberg-1395b.appspot.com",
+    messagingSenderId: "891061349653",
+    appId: "1:891061349653:web:dc37538e823567cd43cd1c"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+function updateCount(eventType, sort) {
+    const countRef = firebase.database().ref(eventType + '/count');
+    const totalRef = firebase.database().ref('totalCounts/' + eventType); // Total räknare för varje händelse
+    const sortRef = firebase.database().ref(eventType + '/sorts/' + sort); // Sort för varje händelsekategori
+
+    countRef.transaction(current => {
+        return (current || 0) + 1;
+    });
+
+    totalRef.transaction(current => { // Öka total räknare
+        return (current || 0) + 1;
+    }).then(() => {
+        sortRef.transaction(current => { // Öka sort-räknaren för den specifika sorten inom kategorin
+            return (current || 0) + 1;
+        });
+        updateSummary();
+    }).catch(error => {
+        console.error("Error updating count:", error);
+    });
+}
+
+function resetCount(eventType) {
+    const countRef = firebase.database().ref(eventType + '/count');
+    countRef.set(0).then(() => {
+        updateSummary(); // Uppdatera sammanfattningen efter att räknaren har återställts
+    }).catch(error => {
+        console.error("Error resetting count:", error);
+    });
+}
+
+function resetSummary() {
+    const events = ['trougFastnat', 'limmetStrular', 'vridnaPaket', 'liggandeBurk', 'medbringarenStrular'];
+
+    const totalCountPromises = events.map(eventType => {
+        const totalCountRef = firebase.database().ref('totalCounts/' + eventType);
+        return totalCountRef.set(0);
+    });
+
+    const sortPromises = events.map(eventType => {
+        const sortRef = firebase.database().ref(eventType + '/sorts');
+        return sortRef.remove();
+    });
+
+    Promise.all([...totalCountPromises, ...sortPromises]).then(() => {
+        updateSummary(); // Uppdatera sammanfattningen efter att data har återställts
+    }).catch(error => {
+        console.error("Error resetting summary:", error);
+    });
+}
+
+
+
+function getCount(eventType) {
+    const countRef = firebase.database().ref(eventType + '/count');
+    countRef.on('value', snapshot => {
+        const count = snapshot.val() || 0;
+        const countElement = document.getElementById(eventType + 'Counter');
+        countElement.innerHTML = 'Antal: ' + count;
+
+        // Uppdatera färgen baserat på antalet
+        if (count <= 10) {
+            countElement.className = 'countDisplay green';
+        } else if (count <= 25) {
+            countElement.className = 'countDisplay orange';
+        } else {
+            countElement.className = 'countDisplay red';
+        }
+    });
+}
+
+function updateSummary() {
+let summaryText = '<h2>Sammanfattning av händelser</h2>';
+summaryText += '<h3 style="color: red;">OBS:</h3> <p>Rör ej <span style="color: #40B0FF;">Återställ Sammanfattning</span> utan en </span>TML <span style="color: #00B000;">Godkännande</span></span></p>';
+
+
+
+    const events = {
+        'trougFastnat': 'Tråg har fastnat i OCME',
+        'limmetStrular': 'Limmet strular',
+        'vridnaPaket': 'Vridna paket',
+        'liggandeBurk': 'Liggande burk',
+        'medbringarenStrular': 'Medbringaren strular i OCME'
+    };
+
+    Object.keys(events).forEach(eventType => {
+        firebase.database().ref('totalCounts/' + eventType).once('value', totalSnapshot => {
+            const totalClicks = totalSnapshot.val() || 0;
+            const eventText = `<strong>${events[eventType]}:</strong> Totalt antal klick: <span class="numberColor">${totalClicks}</span><br>`;
+            let sortsText = ''; // Samla sorter information här
+
+            const sortRef = firebase.database().ref(eventType + '/sorts');
+            sortRef.once('value', sortSnapshot => {
+                const sorts = sortSnapshot.val();
+                if (sorts) {
+                    Object.keys(sorts).forEach(sort => {
+                        const sortCount = sorts[sort];
+                        const sortText = `<strong>Sort:</strong> ${sort}, Antal klick: ${sortCount}<br>`;
+                        sortsText += sortText; // Lägg till denna sorts text till sortsText
+                    });
+                }
+                summaryText += `<div>${eventText}${sortsText}</div><br>`; // Lägg till både eventText och all sortsText till summaryText
+                document.getElementById('summaryContent').innerHTML = summaryText;
+            });
+        });
+    });
+}
+
+
+
+
+
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sortInput = document.getElementById('userName');
+    const allButtons = document.querySelectorAll('button[id^="update"]');
+    allButtons.forEach(button => {
+        button.disabled = true;
+    });
+    ['trougFastnat', 'limmetStrular', 'vridnaPaket', 'liggandeBurk', 'medbringarenStrular'].forEach(eventType => getCount(eventType));
+    sortInput.addEventListener('input', () => {
+        allButtons.forEach(button => {
+            button.disabled = sortInput.value === '';
+        });
+    });
+    updateSummary();
+});
+</script>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo">
+        <img src="carlsberg-sverige_rbg.png" alt="Carlsberg logo">
+    </div>
+    <h1>Produktionshändelser</h1>
+    <input type="text" id="userName" placeholder="Sort">
+    
+    <!-- Exempel på en händelseknapp och räknare -->
+    <div>
+        <button id="updateTray" onclick="updateCount('trougFastnat', document.getElementById('userName').value)" disabled>Tråg har fastnat i OCME</button>
+        <button onclick="resetCount('trougFastnat')" class="reset-button">Återställ Tråg</button>
+        <div id="trougFastnatCounter" class="countDisplay">Antal: 0</div>
+        <div id="trougFastnatInfo" class="infoDisplay"></div>
+    </div>
+    <div>
+        <button id="updateGlue" onclick="updateCount('limmetStrular', document.getElementById('userName').value)" disabled>Limmet strular</button>
+        <button onclick="resetCount('limmetStrular')" class="reset-button">Återställ Limmet</button>
+        <div id="limmetStrularCounter" class="countDisplay">Antal: 0</div>
+        <div id="limmetStrularInfo" class="infoDisplay"></div>
+    </div>
+    <!-- Vridna paket -->
+    <div>
+        <button id="updatePackage" onclick="updateCount('vridnaPaket', document.getElementById('userName').value)" disabled>Vridna paket</button>
+        <button onclick="resetCount('vridnaPaket')" class="reset-button">Återställ Paket</button>
+        <div id="vridnaPaketCounter" class="countDisplay">Antal: 0</div>
+        <div id="vridnaPaketInfo" class="infoDisplay"></div>
+    </div>
+
+    <!-- Liggande burk -->
+    <div>
+        <button id="updateCan" onclick="updateCount('liggandeBurk', document.getElementById('userName').value)" disabled>Liggande burk</button>
+        <button onclick="resetCount('liggandeBurk')" class="reset-button">Återställ Burk</button>
+        <div id="liggandeBurkCounter" class="countDisplay">Antal: 0</div>
+        <div id="liggandeBurkInfo" class="infoDisplay"></div>
+    </div>
+
+    <!-- Medbringaren strular i OCME -->
+    <div>
+        <button id="updateCarrier" onclick="updateCount('medbringarenStrular', document.getElementById('userName').value)" disabled>Medbringaren strular i OCME</button>
+        <button onclick="resetCount('medbringarenStrular')" class="reset-button">Återställ Medbringaren</button>
+        <div id="medbringarenStrularCounter" class="countDisplay">Antal: 0</div>
+        <div id="medbringarenStrularInfo" class="infoDisplay"></div>
+    </div>
+
+    <!-- Sammanfattning -->
+    <div class="summary">
+        <div id="summaryContent"></div>
+        <button onclick="resetSummary()" class="reset-button">Återställ Sammanfattning</button>
+    </div>
+</div>
+
+</body>
+</html>
+
