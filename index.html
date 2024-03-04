@@ -49,7 +49,7 @@
         width: 100%;
     }
     .reset-button {
-        background-color: #40B0FF;
+        background-color: #003F26;
     }
     button:disabled {
         opacity: 0.5;
@@ -82,7 +82,7 @@
     .orange { color: orange; }
     .red { color: red; }
     .numberColor {
-        color: #FF0000; /* Exempel: En orange färg */
+        color: #fff; /* Exempel: En orange färg */
     }
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -172,7 +172,7 @@ function getCount(eventType) {
 
 function updateSummary() {
 let summaryText = '<h2>Sammanfattning av händelser</h2>';
-summaryText += '<h3 style="color: red;">OBS:</h3> <p>Rör ej <span style="color: #40B0FF;">Återställ Sammanfattning</span> utan en </span>TML <span style="color: #00B000;">Godkännande</span></span></p>';
+summaryText += '<h3 style="color: red;">OBS:</h3> <p>RÖR EJ <span>Återställ Sammanfattning</span> utan en </span>TML <span style="color: #00B000;">Godkännande</span></span></p>';
 
 
 
@@ -286,4 +286,3 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
