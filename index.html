@@ -131,24 +131,38 @@ function resetCount(eventType) {
 }
 
 function resetSummary() {
-    const events = ['trougFastnat', 'limmetStrular', 'vridnaPaket', 'liggandeBurk', 'medbringarenStrular'];
+    const correctCode = "3232"; // Ersätt 'hemligKod' med din faktiska kod
+    const userInputCode = document.getElementById('resetCode').value;
 
-    const totalCountPromises = events.map(eventType => {
-        const totalCountRef = firebase.database().ref('totalCounts/' + eventType);
-        return totalCountRef.set(0);
-    });
+    if (userInputCode === correctCode) {
+        console.log("Återställer sammanfattningen...");
+        
+        // Antag att vi återställer totala räknare för händelsetyper samt sortspecifika räknare
+        const events = ['trougFastnat', 'limmetStrular', 'vridnaPaket', 'liggandeBurk', 'medbringarenStrular'];
+        
+        events.forEach(eventType => {
+            const totalCountRef = firebase.database().ref('totalCounts/' + eventType);
+            totalCountRef.set(0); // Nollställer räknaren för varje händelsetyp
 
-    const sortPromises = events.map(eventType => {
-        const sortRef = firebase.database().ref(eventType + '/sorts');
-        return sortRef.remove();
-    });
+            const sortRef = firebase.database().ref(eventType + '/sorts');
+            sortRef.remove(); // Tar bort alla sortspecifika räknare
+        });
 
-    Promise.all([...totalCountPromises, ...sortPromises]).then(() => {
-        updateSummary(); // Uppdatera sammanfattningen efter att data har återställts
-    }).catch(error => {
-        console.error("Error resetting summary:", error);
-    });
+        // Uppdatera UI efter återställning
+        updateSummary();
+
+        // Bortkommenterad alert eftersom du inte vill ha något meddelande om att sammanfattningen har återställts
+        // alert("Sammanfattningen har återställts.");
+    } else {
+        alert("Fel kod. Försök igen.");
+    }
+    
+    // Rensa kodfältet
+    document.getElementById('resetCode').value = '';
 }
+
+
+
 
 
 
@@ -171,10 +185,9 @@ function getCount(eventType) {
 }
 
 function updateSummary() {
-let summaryText = '<h2>Sammanfattning av händelser</h2>';
-summaryText += '<h3 style="color: red;">OBS:</h3> <p>RÖR EJ <span>Återställ Sammanfattning</span> utan en </span>TML <span style="color: #00B000;">Godkännande</span></span></p>';
-
-
+    let summaryText = '<h2>Sammanfattning av händelser</h2>';
+    summaryText += '<div style="text-align: center;"><h3 style="color: red; margin-bottom: 5px;">OBS:</h3>';
+    summaryText += '<p style="color: #CCCCCC; margin-bottom: 20px;">Veckobaserad översikt över produktionshändelser.</p></div>';
 
     const events = {
         'trougFastnat': 'Tråg har fastnat i OCME',
@@ -187,8 +200,9 @@ summaryText += '<h3 style="color: red;">OBS:</h3> <p>RÖR EJ <span>Återställ S
     Object.keys(events).forEach(eventType => {
         firebase.database().ref('totalCounts/' + eventType).once('value', totalSnapshot => {
             const totalClicks = totalSnapshot.val() || 0;
-            const eventText = `<strong>${events[eventType]}:</strong> Totalt antal klick: <span class="numberColor">${totalClicks}</span><br>`;
-            let sortsText = ''; // Samla sorter information här
+            // Lägg till inline CSS för att styla siffrorna mer framträdande
+            const eventText = `<strong>${events[eventType]}:</strong> Totalt antal klick: <span class="numberColor" style="font-weight: bold; font-size: 18px; color: #FFD700;">${totalClicks}</span><br>`;
+            let sortsText = '';
 
             const sortRef = firebase.database().ref(eventType + '/sorts');
             sortRef.once('value', sortSnapshot => {
@@ -196,11 +210,11 @@ summaryText += '<h3 style="color: red;">OBS:</h3> <p>RÖR EJ <span>Återställ S
                 if (sorts) {
                     Object.keys(sorts).forEach(sort => {
                         const sortCount = sorts[sort];
-                        const sortText = `<strong>Sort:</strong> ${sort}, Antal klick: ${sortCount}<br>`;
-                        sortsText += sortText; // Lägg till denna sorts text till sortsText
+                        // Tillämpa samma stil för siffrorna i sortText
+                        sortsText += `<strong>Sort:</strong> ${sort}, Antal klick: <span style="font-weight: bold; font-size: 18px; color: #FFD700;">${sortCount}</span><br>`;
                     });
                 }
-                summaryText += `<div>${eventText}${sortsText}</div><br>`; // Lägg till både eventText och all sortsText till summaryText
+                summaryText += `<div>${eventText}${sortsText}</div><br>`;
                 document.getElementById('summaryContent').innerHTML = summaryText;
             });
         });
@@ -227,6 +241,12 @@ document.addEventListener('DOMContentLoaded', () => {
             button.disabled = sortInput.value === '';
         });
     });
+
+
+
+
+
+
     updateSummary();
 });
 </script>
@@ -276,10 +296,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <div id="medbringarenStrularCounter" class="countDisplay">Antal: 0</div>
         <div id="medbringarenStrularInfo" class="infoDisplay"></div>
     </div>
-
     <!-- Sammanfattning -->
     <div class="summary">
         <div id="summaryContent"></div>
+<input type="password" id="resetCode" placeholder="Ange kod" style="margin-bottom: 10px;">
         <button onclick="resetSummary()" class="reset-button">Återställ Sammanfattning</button>
     </div>
 </div>
