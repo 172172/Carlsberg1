@@ -5,6 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Produktionshändelser</title>
 <style>
+.click-count {
+font-weight: bold;
+    color: #FFFFFF;
+}
+
+.run-duration {
+font-weight: bold;
+    color: #FFFFFF;
+}
+
+.highlight {
+    font-weight: bold;
+    color: #FFB000; /* Blå */
+}
+
+.important-data {
+    color: gold; /* Röd */
+    font-weight: bold;
+}
+
+/* Du kan lägga till fler klasser för olika nivåer av viktighet eller information */
+
+.numberColor {
+    font-weight: bold;
+    font-size: 18px;
+    color: #FFD700; /* Guld */
+}
+
+
 .signature {
     font-size: 24px;
     font-weight: bold;
@@ -141,66 +170,153 @@
 
   firebase.initializeApp(firebaseConfig);
 
+
 function updateCount(eventType, sort) {
-    const countRef = firebase.database().ref(eventType + '/count');
-    const totalRef = firebase.database().ref('totalCounts/' + eventType); // Total räknare för varje händelse
-    const sortRef = firebase.database().ref(eventType + '/sorts/' + sort); // Sort för varje händelsekategori
+    const runDurationInput = document.getElementById('runDuration').value || '0h';
+    const sortWithTimeKey = `${sort}-${runDurationInput}`;
 
-    countRef.transaction(current => {
-        return (current || 0) + 1;
-    });
+    // Lägger till loggning här
+    console.log(`Updating count for ${eventType} with sort ${sortWithTimeKey}`);
 
-    totalRef.transaction(current => { // Öka total räknare
-        return (current || 0) + 1;
-    }).then(() => {
-        sortRef.transaction(current => { // Öka sort-räknaren för den specifika sorten inom kategorin
+    const countRef = firebase.database().ref(`${eventType}/counts/${sortWithTimeKey}`);
+    const totalRef = firebase.database().ref(`totalCounts/${eventType}`);
+    const sortRef = firebase.database().ref(`${eventType}/sorts/${sortWithTimeKey}`);
+
+    // Samla alla promises från transaktionerna
+    const transactionPromises = [
+        countRef.transaction(current => (current || 0) + 1),
+        totalRef.transaction(current => (current || 0) + 1)
+    ];
+
+    Promise.all(transactionPromises).then(() => {
+        // Efter att de första två transaktionerna slutförts, utför den tredje transaktionen
+        return sortRef.transaction(current => {
             return (current || 0) + 1;
         });
-        updateSummary();
+    }).then(() => {
+        // Hämta det nya totala antalet efter alla transaktioner har slutförts
+        return totalRef.once('value');
+    }).then(snapshot => {
+        const newTotalCount = snapshot.val() || 0;
+        const countDisplayIdMap = {
+            // OCME-events
+            'trougFastnat': 'ocmeTrayCounter',
+            'limmetStrular': 'ocmeGlueCounter',
+            'vridnaPaket': 'ocmePackageCounter',
+            'liggandeBurk': 'ocmeCanCounter',
+            'medbringarenStrular': 'ocmeCarrierCounter',
+
+            // Jones-events
+            'trougStrularVidBacken': 'jonesTrayCounter',
+            'limmetStrularJones': 'jonesGlueCounter',
+            'LFormat': 'jonesLFormatCounter',
+            'liggandeBurkJones': 'jonesCanCounter',
+            'krashVidInmatningen': 'jonesCrashCounter'
+        };
+
+        const countDisplayId = countDisplayIdMap[eventType];
+        const countDisplay = document.getElementById(countDisplayId);
+        if (countDisplay) {
+            countDisplay.textContent = "Antal: " + newTotalCount;
+            updateSummary();
+        } else {
+            console.error("Count display element not found:", countDisplayId);
+        }
     }).catch(error => {
         console.error("Error updating count:", error);
     });
 }
 
-function resetCount(eventType) {
-    const countRef = firebase.database().ref(eventType + '/count');
-    countRef.set(0).then(() => {
-        updateSummary(); // Uppdatera sammanfattningen efter att räknaren har återställts
-    }).catch(error => {
-        console.error("Error resetting count:", error);
+
+
+function resetAllCounts() {
+    const countDisplayIdMap = {
+        'trougFastnat': 'ocmeTrayCounter',
+        'limmetStrular': 'ocmeGlueCounter',
+        'vridnaPaket': 'ocmePackageCounter',
+        'liggandeBurk': 'ocmeCanCounter',
+        'medbringarenStrular': 'ocmeCarrierCounter',
+        'trougStrularVidBacken': 'jonesTrayCounter',
+        'limmetStrularJones': 'jonesGlueCounter',
+        'LFormat': 'jonesLFormatCounter',
+        'liggandeBurkJones': 'jonesCanCounter',
+        'krashVidInmatningen': 'jonesCrashCounter'
+    };
+
+    console.log("Starting to reset all counts...");
+    
+    Object.keys(countDisplayIdMap).forEach(eventType => {
+        const countDisplayId = countDisplayIdMap[eventType];
+        const countDisplay = document.getElementById(countDisplayId);
+        if (countDisplay) {
+            countDisplay.textContent = "Antal: 0";
+        }
+
+        const countRef = firebase.database().ref(`${eventType}/counts`);
+        countRef.remove()
+            .then(() => console.log(`Counts for ${eventType} removed successfully.`))
+            .catch(error => console.error("Error removing counts for", eventType, error));
+
+        const sortRef = firebase.database().ref(`${eventType}/sorts`);
+        sortRef.remove()
+            .then(() => console.log(`Sorts for ${eventType} removed successfully.`))
+            .catch(error => console.error("Error removing sorts for", eventType, error));
+
+        const totalRef = firebase.database().ref(`totalCounts/${eventType}`);
+        totalRef.remove()
+            .then(() => console.log(`Total counts for ${eventType} removed successfully.`))
+            .catch(error => console.error("Error removing total counts for", eventType, error));
     });
 }
 
+
+
+
 function resetSummary() {
-    const correctCode = "3232"; // Ersätt 'hemligKod' med din faktiska kod
+    const correctCode = "3232"; // Använd din faktiska kod här
     const userInputCode = document.getElementById('resetCode').value;
 
     if (userInputCode === correctCode) {
         console.log("Återställer sammanfattningen...");
-        
-        // Antag att vi återställer totala räknare för händelsetyper samt sortspecifika räknare
-        const events = ['trougFastnat', 'limmetStrular', 'vridnaPaket', 'liggandeBurk', 'medbringarenStrular', 'trougStrularVidBacken', 'limmetStrularJones', 'LFormat', 'liggandeBurkJones', 'krashVidInmatningen'];
-        
-        events.forEach(eventType => {
-            const totalCountRef = firebase.database().ref('totalCounts/' + eventType);
-            totalCountRef.set(0); // Nollställer räknaren för varje händelsetyp
 
-            const sortRef = firebase.database().ref(eventType + '/sorts');
-            sortRef.remove(); // Tar bort alla sortspecifika räknare
+        // Skapa en lista med promises för att vänta på att alla åtgärder ska slutföras
+        const promises = [];
+
+        // Loopa igenom varje händelse och ta bort lyssnaren för varje händelse
+        ['trougFastnat', 'limmetStrular', 'vridnaPaket', 'liggandeBurk', 'medbringarenStrular', 'trougStrularVidBacken', 'limmetStrularJones', 'LFormat', 'liggandeBurkJones', 'krashVidInmatningen'].forEach(eventType => {
+            const countRef = firebase.database().ref(eventType + '/count');
+            promises.push(countRef.off()); // Lägg till varje operation i promises-listan
         });
 
-        // Töm sammanfattningen direkt efter återställning
-        document.getElementById('summaryContent').innerHTML = '';
+        // Återställ alla räkningar
+        resetAllCounts();
 
-        // Bortkommenterad alert eftersom du inte vill ha något meddelande om att sammanfattningen har återställts
-        // alert("Sammanfattningen har återställts.");
+        // Återställ totala räkningar
+        const totalCountsRef = firebase.database().ref('totalCounts');
+        promises.push(totalCountsRef.remove());
+
+        // Återställ händelsedata
+        const eventsRef = firebase.database().ref('events');
+        promises.push(eventsRef.remove());
+
+        // Utför alla åtgärder parallellt och vänta på att de ska slutföras
+        Promise.all(promises)
+            .then(() => {
+                // Alla åtgärder har slutförts, töm sammanfattningselementet
+                document.getElementById('summaryContent').innerHTML = '';
+                console.log("Sammanfattningen har återställts.");
+            })
+            .catch(error => {
+                console.error("Ett fel uppstod vid återställning av sammanfattningen:", error);
+                alert("Ett fel uppstod vid återställning av sammanfattningen. Försök igen senare.");
+            });
     } else {
         alert("Fel kod. Försök igen.");
     }
-    
-    // Rensa kodfältet
+
     document.getElementById('resetCode').value = '';
 }
+
 
 
 
@@ -215,15 +331,19 @@ function getCount(eventType) {
             countElement.innerHTML = 'Antal: ' + count;
             // Uppdatera färgen baserat på antalet
             if (count <= 10) {
-                countElement.className = 'countDisplay white';
+                countElement.classList.add('white');
+                countElement.classList.remove('orange', 'red');
             } else if (count <= 25) {
-                countElement.className = 'countDisplay orange';
+                countElement.classList.add('orange');
+                countElement.classList.remove('white', 'red');
             } else {
-                countElement.className = 'countDisplay red';
+                countElement.classList.add('red');
+                countElement.classList.remove('white', 'orange');
             }
         }
     });
 }
+
 
 function updateSummary() {
     let summaryText = '<h2>Sammanfattning av händelser</h2>';
@@ -243,48 +363,91 @@ function updateSummary() {
         'krashVidInmatningen': 'Krasch vid inmatningen till trågen'
     };
 
+    const promises = [];
+
     Object.keys(events).forEach(eventType => {
         firebase.database().ref('totalCounts/' + eventType).once('value', totalSnapshot => {
             const totalClicks = totalSnapshot.val() || 0;
-            // Lägg till inline CSS för att styla siffrorna mer framträdande
             if (totalClicks > 0) {
-                const eventText = `<strong>${events[eventType]}:</strong> Totalt antal klick: <span class="numberColor" style="font-weight: bold; font-size: 18px; color: #FFD700;">${totalClicks}</span><br>`;
                 let sortsText = '';
-
                 const sortRef = firebase.database().ref(eventType + '/sorts');
                 sortRef.once('value', sortSnapshot => {
                     const sorts = sortSnapshot.val();
                     if (sorts) {
-                        Object.keys(sorts).forEach(sort => {
-                            const sortCount = sorts[sort];
-                            // Tillämpa samma stil för siffrorna i sortText
-                            sortsText += `<strong>Sort:</strong> ${sort}, Antal klick: <span style="font-weight: bold; font-size: 18px; color: #FFD700;">${sortCount}</span><br>`;
+                        Object.keys(sorts).forEach(sortKey => {
+                            const sortDetails = sortKey.split('-');
+                            const sortName = sortDetails[0];
+                            const runDurationInput = sortDetails[1] || '0h';
+                            const runHours = parseFloat(runDurationInput.replace('h', '')) || 0;
+                            const sortCount = sorts[sortKey];
+                            const totalMinutes = runHours * 60;
+                            const totalStopTime = sortCount * 1;
+                            let stopTimePercentage = 0;
+                            if (totalMinutes > 0) {
+                                stopTimePercentage = (totalStopTime / totalMinutes * 100).toFixed(2);
+                            }
+
+                            sortsText += `<strong>Sort:</strong> ${sortName}, Antal klick: ${sortCount}, Körning ${runDurationInput} <span class="highlight">(${totalStopTime} minuter, <span class="important-data">${stopTimePercentage}%</span>)</span><br>`;
                         });
                     }
+                    const eventText = `<strong>${events[eventType]}:</strong> Totalt antal klick: <span class="numberColor">${totalClicks}</span><br>`;
                     summaryText += `<div>${eventText}${sortsText}</div><br>`;
-                    document.getElementById('summaryContent').innerHTML = summaryText;
+                }).then(() => {
+                    // Skapa en promise för varje sammanfattning som ska uppdateras
+                    const updateSummaryPromise = new Promise((resolve) => {
+                        document.getElementById('summaryContent').innerHTML = summaryText;
+                        resolve();
+                    });
+                    // Lägg till varje sammanfattning-uppdateringslöfte till promises array
+                    promises.push(updateSummaryPromise);
                 });
             }
         });
     });
+
+    // När alla sammanfattningar har uppdaterats, kör resten av koden
+    Promise.all(promises).then(() => {
+        console.log("All summaries updated successfully.");
+        // Fortsätt med eventuella ytterligare åtgärder här, t.ex. visa meddelande om att uppdateringen är klar
+    });
 }
+
+
+
+
+
+
+
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
     const sortInput = document.getElementById('userName');
+    const runDurationInput = document.getElementById('runDuration');
     const allButtons = document.querySelectorAll('button[id^="update"]');
-    allButtons.forEach(button => {
-        button.disabled = true;
-    });
-    ['trougFastnat', 'limmetStrular', 'vridnaPaket', 'liggandeBurk', 'medbringarenStrular', 'trougStrularVidBacken', 'limmetStrularJones', 'LFormat', 'liggandeBurkJones', 'krashVidInmatningen'].forEach(eventType => getCount(eventType));
-    sortInput.addEventListener('input', () => {
-        allButtons.forEach(button => {
-            button.disabled = sortInput.value === '';
-        });
-    });
 
+    function isValidRunDuration(value) {
+        return /^\d+h$/.test(value);
+    }
+
+    const updateButtonStates = () => {
+        const isInputValid = sortInput.value !== '' && isValidRunDuration(runDurationInput.value);
+        allButtons.forEach(button => {
+            button.disabled = !isInputValid;
+        });
+    };
+
+    updateButtonStates();
+
+    sortInput.addEventListener('input', updateButtonStates);
+    runDurationInput.addEventListener('input', updateButtonStates);
+
+    // Uppdatera sammanfattningen och aktivera knappar baserat på händelsetyper
+    ['trougFastnat', 'limmetStrular', 'vridnaPaket', 'liggandeBurk', 'medbringarenStrular', 'trougStrularVidBacken', 'limmetStrularJones', 'LFormat', 'liggandeBurkJones', 'krashVidInmatningen'].forEach(eventType => getCount(eventType));
     updateSummary();
 });
+
+
 
 function showOcmeEvents() {
     document.getElementById('ocmeEvents').style.display = 'block';
@@ -309,82 +472,83 @@ function showJonesEvents() {
     </div>
     <h1>Produktionshändelser</h1>
     <input type="text" id="userName" placeholder="Sort">
+    <input type="text" id="runDuration" placeholder="Körning (t.ex. 10h)" style="margin-bottom: 10px;">
+
     
     <!-- Huvudknappar för OCME och Jones -->
     <div class="main-buttons">
-        <button id="ocmeButton" onclick="showOcmeEvents()">OCME</button>
-        <button id="jonesButton" onclick="showJonesEvents()">Jones</button>
-    </div>
-    
-    <!-- Här placeras händelseknapparna för OCME-händelser -->
-    <div id="ocmeEvents">
-        <!-- Händelseknappar för OCME-händelser -->
-        <div>
-            <button id="updateTray" onclick="updateCount('trougFastnat', document.getElementById('userName').value)" disabled>Tråg har fastnat i OCME</button>
-            <button onclick="resetCount('trougFastnat')" class="reset-button">Återställ Tråg</button>
-            <div id="trougFastnatCounter" class="countDisplay">Antal: 0</div>
-            <div id="trougFastnatInfo" class="infoDisplay"></div>
-        </div>
-        <div>
-            <button id="updateGlue" onclick="updateCount('limmetStrular', document.getElementById('userName').value)" disabled>Limmet strular</button>
-            <button onclick="resetCount('limmetStrular')" class="reset-button">Återställ Limmet</button>
-            <div id="limmetStrularCounter" class="countDisplay">Antal: 0</div>
-            <div id="limmetStrularInfo" class="infoDisplay"></div>
-        </div>
-        <div>
-            <button id="updatePackage" onclick="updateCount('vridnaPaket', document.getElementById('userName').value)" disabled>Vridna paket</button>
-            <button onclick="resetCount('vridnaPaket')" class="reset-button">Återställ Paket</button>
-            <div id="vridnaPaketCounter" class="countDisplay">Antal: 0</div>
-            <div id="vridnaPaketInfo" class="infoDisplay"></div>
-        </div>
-        <div>
-            <button id="updateCan" onclick="updateCount('liggandeBurk', document.getElementById('userName').value)" disabled>Liggande burk</button>
-            <button onclick="resetCount('liggandeBurk')" class="reset-button">Återställ Burk</button>
-            <div id="liggandeBurkCounter" class="countDisplay">Antal: 0</div>
-            <div id="liggandeBurkInfo" class="infoDisplay"></div>
-        </div>
-        <div>
-            <button id="updateCarrier" onclick="updateCount('medbringarenStrular', document.getElementById('userName').value)" disabled>Medbringaren strular i OCME</button>
-            <button onclick="resetCount('medbringarenStrular')" class="reset-button">Återställ Medbringaren</button>
-            <div id="medbringarenStrularCounter" class="countDisplay">Antal: 0</div>
-            <div id="medbringarenStrularInfo" class="infoDisplay"></div>
-        </div>
-    </div>
+    <button id="ocmeButton" onclick="showOcmeEvents()">OCME</button>
+    <button id="jonesButton" onclick="showJonesEvents()">Jones</button>
+</div>
 
-    <!-- Här placeras händelseknapparna för Jones-händelser -->
+<div id="ocmeEvents">
+    <!-- Händelseknappar för OCME-händelser -->
+    <div>
+        <button id="updateTray" onclick="updateCount('trougFastnat', document.getElementById('userName').value)" disabled>Tråg har fastnat</button>
+      
+        <div id="ocmeTrayCounter" class="countDisplay">Antal: 0</div>
+        <div id="trougFastnatInfo" class="infoDisplay"></div>
+    </div>
+    <div>
+        <button id="updateGlue" onclick="updateCount('limmetStrular', document.getElementById('userName').value)" disabled>Limmet strular</button>
+       
+        <div id="ocmeGlueCounter" class="countDisplay">Antal: 0</div>
+        <div id="limmetStrularInfo" class="infoDisplay"></div>
+    </div>
+    <div>
+        <button id="updatePackage" onclick="updateCount('vridnaPaket', document.getElementById('userName').value)" disabled>Vridna paket</button>
+       
+        <div id="ocmePackageCounter" class="countDisplay">Antal: 0</div>
+        <div id="vridnaPaketInfo" class="infoDisplay"></div>
+    </div>
+    <div>
+        <button id="updateCan" onclick="updateCount('liggandeBurk', document.getElementById('userName').value)" disabled>Liggande burk</button>
+       
+        <div id="ocmeCanCounter" class="countDisplay">Antal: 0</div>
+        <div id="liggandeBurkInfo" class="infoDisplay"></div>
+    </div>
+    <div>
+        <button id="updateCarrier" onclick="updateCount('medbringarenStrular', document.getElementById('userName').value)" disabled>Medbringaren strular</button>
+        
+        <div id="ocmeCarrierCounter" class="countDisplay">Antal: 0</div>
+        <div id="medbringarenStrularInfo" class="infoDisplay"></div>
+    </div>
+</div>
+
 <div id="jonesEvents" style="display: none;">
     <!-- Händelseknappar för Jones-händelser -->
     <div>
         <button id="updateTrayJones" onclick="updateCount('trougStrularVidBacken', document.getElementById('userName').value)" disabled>Tråg strular vid backen</button>
-        <button onclick="resetCount('trougStrularVidBacken')" class="reset-button">Återställ Tråg</button>
-        <div id="trougStrularVidBackenCounter" class="countDisplay">Antal: 0</div> <!-- Uppdatera ID här -->
+        
+        <div id="jonesTrayCounter" class="countDisplay">Antal: 0</div>
         <div id="trougStrularVidBackenInfo" class="infoDisplay"></div>
     </div>
     <div>
         <button id="updateGlueJones" onclick="updateCount('limmetStrularJones', document.getElementById('userName').value)" disabled>Limmet strular</button>
-        <button onclick="resetCount('limmetStrularJones')" class="reset-button">Återställ Limmet</button>
-        <div id="limmetStrularJonesCounter" class="countDisplay">Antal: 0</div> <!-- Uppdatera ID här -->
+        
+        <div id="jonesGlueCounter" class="countDisplay">Antal: 0</div>
         <div id="limmetStrularJonesInfo" class="infoDisplay"></div>
     </div>
     <div>
         <button id="updateLFormat" onclick="updateCount('LFormat', document.getElementById('userName').value)" disabled>L-format</button>
-        <button onclick="resetCount('LFormat')" class="reset-button">Återställ L-format</button>
-        <div id="LFormatCounter" class="countDisplay">Antal: 0</div> <!-- Uppdatera ID här -->
+        
+        <div id="jonesLFormatCounter" class="countDisplay">Antal: 0</div>
         <div id="LFormatInfo" class="infoDisplay"></div>
     </div>
     <div>
         <button id="updateCanJones" onclick="updateCount('liggandeBurkJones', document.getElementById('userName').value)" disabled>Liggande burk</button>
-        <button onclick="resetCount('liggandeBurkJones')" class="reset-button">Återställ Burk</button>
-        <div id="liggandeBurkJonesCounter" class="countDisplay">Antal: 0</div> <!-- Uppdatera ID här -->
+        
+        <div id="jonesCanCounter" class="countDisplay">Antal: 0</div>
         <div id="liggandeBurkJonesInfo" class="infoDisplay"></div>
     </div>
     <div>
-        <button id="updateCrash" onclick="updateCount('krashVidInmatningen', document.getElementById('userName').value)" disabled>Krasch vid inmatningen till trågen</button>
-        <button onclick="resetCount('krashVidInmatningen')" class="reset-button">Återställ Krasch</button>
-        <div id="krashVidInmatningenCounter" class="countDisplay">Antal: 0</div> <!-- Uppdatera ID här -->
+        <button id="updateCrash" onclick="updateCount('krashVidInmatningen', document.getElementById('userName').value)" disabled>Krasch i mitten</button>
+        
+        <div id="jonesCrashCounter" class="countDisplay">Antal: 0</div>
         <div id="krashVidInmatningenInfo" class="infoDisplay"></div>
     </div>
 </div>
+<button " class="reset-button" onclick="resetAllCounts()">Återställ Alla Räknare</button>
 
     
     <!-- Sammanfattning -->
