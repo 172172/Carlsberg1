@@ -2,213 +2,375 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detaljerade Sortbytesinstruktioner</title>
-    <style>
-        body {
-            background-color: #1f1f1f;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Drinkkalkylator</title>
+<style>
+#specificInput {
+    border: none; /* Ta bort ramen */
+    background-color: transparent; /* Ta bort bakgrundsfärgen */
+    color: #ccc; /* Justera textfärgen */
+}
 
-        .container {
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #222;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.7);
-        }
+#specificInput::placeholder {
+    color: #ccc; /* Justera färgen på placeholder-texten */
+}
 
-        .step {
-            cursor: pointer;
-            padding: 10px;
-            margin-bottom: 5px;
-            border: 1px solid #404040;
-            border-radius: 5px;
-          }
+.mini-calculator {
+    margin-top: 20px;
+    text-align: center;
+margin-left: 7px;
+}
 
-        .content {
-            display: none;
-            padding-left: 20px;
-            margin-bottom: 20px;
-        }
+#specificInput {
+    width: 200px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #888;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
 
-        .completed {
-            background-color: #76b900;
-        }
+#specificInput:focus {
+    outline: none;
+    border-color: #555;
+}
 
-        button {
-            margin-top: 10px;
-            padding: 5px 10px;
-            background-color: #76b900;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+#miniCalculateButton {
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    background-color: #333;
+    color: #fff;
+}
 
-        .lock-per-pall {
-            color: #76b900;
-        }
- .lol {
-            color: #ff0000; /* Ändra till önskad färg */
-        }
+#miniCalculateButton:hover {
+    background-color: #555;
+}
+
+.center-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+#specificInput {
+    width: 150px; /* Justera bredden här */
+    font-size: 18px;
+    /* Övriga stilar för det specifika inputfältet */
+}
+
+.signature {
+    font-size: 24px;
+    font-weight: bold;
+    color: #ccc;
+    text-transform: uppercase;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    background-color: #1f1f1f;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #222;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
 .logo {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+    text-align: center;
+    margin-bottom: 20px;
+}
 
-        .logo img {
-            width: 300px;
-            height: auto;
-        }
-    </style>
+.logo img {
+    width: 300px;
+    height: auto;
+}
 
+h1, h2 {
+    color: #fff;
+    text-align: center;
+}
+
+button {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    padding: 10px 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    background-color: #333;
+    color: #fff;
+    display: block;
+    width: 100%;
+margin-left: -1px;
+}
+
+button.button-selected {
+    background-color: #444;
+}
+
+button:hover {
+    background-color: #555;
+}
+
+input[type="number"] {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    padding: 10px;
+    margin: 5px 0;
+    border: 1px solid #none;
+    border-radius: 5px;
+    width: calc(100% - 22px);
+    color: #ccc;
+    background-color: transparent;
+    /* Dölj pilarna i inputfält för nummer */
+    -moz-appearance: textfield; /* För Firefox */
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield; /* För Firefox */
+}
+
+.hidden {
+    display: none; /* Göm inputfält */
+}
+
+#resultContainer {
+    margin-top: 20px;
+    display: none;
+}
+
+#result {
+    font-size: 18px;
+    text-align: center;
+}
+
+#syrupValue,
+#beerVolumeValue {
+    margin-top: 10px;
+    text-align: center; /* Centrera texten */
+}
+.result-item {
+    font-size: 20px;
+    margin: 10px;
+    text-align: center; /* Centrera texten */
+}
+#stock,
+#beerStock {
+    /* Dölj fältet initialt */
+    display: none;
+    
+    /* Övriga stilar för fältet */
+    width: 150px; /* Justera bredden för att matcha miniräknaren */
+    padding: 10px; /* Lägg till padding för att matcha utseendet på miniräknaren */
+    border: 1px solid #888; /* Lägg till en ram */
+    border-radius: 5px; /* Runda hörnen */
+    background-color: transparent; /* Ta bort bakgrundsfärgen */
+    color: #ccc; /* Justera textfärgen */
+margin-left: 10px;
+}
+
+#stock:focus,
+#beerStock:focus {
+    outline: none; /* Ta bort fokusramen när det är markerat */
+    border-color: #555; /* Ändra ramens färg när det är markerat */
+}
+
+</style>
 </head>
 <body>
 
-    
 <div class="container">
- <div class="logo">
+    <div class="logo">
         <img src="carlsberg-sverige_rbg.png" alt="Carlsberg logo">
-</div>
-    <h1>Sortbytesinstruktioner</h1>
-
-
-    <!-- Lockbyte Section -->
-    <div class="step">Har du lockbyte?</div>
-    <div class="content">
-        
-        <p>Räkna 110 000 burkar minus den totala mängden vi ska köra på denna order!</p>
-<p>Fyll upp bandet med maximalt 4 rullar höga.</p>
-<p>Passa på att fylla upp bandet med nya lock, <p class="lol">OBS</p>Glöm inte att lägga plåten mellan dom gamla locken och dom nya locken.</p>
-<p>Invänta att pallastarn ringer dig.</p>
-<p>Plocka bort alla gamla rullar från bordet.</p>
-        <button onclick="completeStep(this)">Markera som genomfört</button>
     </div>
-
-    <!-- Öl till öl Section -->
-    <div class="step">Öl till öl</div>
-    <div class="content">
-       <div class="container">
-    <p class="lock-per-pall">Steg 1 Pastör</p></p>Tryck bort larm</p>
-</p>Sätt in nya tanken</p>
-</p>Om värdena är rätt tryck sortbyte (mindre än 65-67%)</p>
-</p>Släpp cirkulation</p> invänta sista burkarna.</p></p> </div>
-  <div class="container">
-    <p class="lock-per-pall">Steg 2 Tapp</p></p>Stäng ventil till burkbana</p>
-</p>Öppna tömning av burbanan</p>
-</p>Stäng inmatning av burkar</p>
-</p>Nolla räkning</p>
-</p>Töm tappen (filler drain)</p></p> </div>
-
-
-<div class="container">
-    <p class="lock-per-pall">Steg 3 Pastör</p>Restöl eller dränage</p> </div>
-<div class="container">
-    <p class="lock-per-pall">Tunnelpastör om du kör alkoholfritt:</p>Dekorbyte: program —> funktioner —> dekorbyte:</p> </div>
-<div class="container">
-<p class="lock-per-pall">Steg 4 Töm banorna</p>Klicka tömning på panelen vid banorna och gå till slutet av banan och töm med golvskrapan</p> </div>
-<div class="container">
-    <p class="lock-per-pall">Steg 5 Pastör</p>När tanken är tömd ta in ny öl</p>Släpp cirkulation</p>
-</p>Produktion och aktivera</p> </div>
-
-
-<div class="container">
-    <p class="lock-per-pall">Steg 6 Dator</p>Stoppa order
-Starta ny order
-Nolla första heuft och skriv upp</p> </div>
-
-
-<div class="container">
-    <p class="lock-per-pall">Steg 7 Tapp:</p> </p>Aktivera intag av öl: flagga —> bubblorna —> flagga</p>
-</p>Starta tapp med grön knapp</p>
-</p>(Om lockbyte plocka ut gamla lock)
-(Om rengöring starta COP efter att tappen blåst färdigt och gått ner i fart)</p>
-</p>Släpp ner burkarna och starta produktion</p></div>
-        <button onclick="completeStep(this)">Markera som genomfört</button>
+    <h1>Avräkning för sortbyte</h1>
+    <div>
+        <h2>Välj storlek:</h2>
+        <button class="drink-size" id="sleek">Sleek</button>
+        <button class="drink-size" id="cl33">33cl</button>
+        <button class="drink-size" id="cl50">50cl</button>
     </div>
-
-    <!-- Läsk till läsk Section -->
-    <div class="step">Läsk till läsk</div>
-    <div class="content">
-         <div class="container">
-    <p class="lock-per-pall">Steg 1 Mixern:</p>När tank tom,
-Stoppa cirkulationspilen</p>
-</p>Syrup, Stop, Flagga</p> Syrup run out, Starta med cirkulationspilen, Stäng ventil till burkbana</p> </div>
-
-  <div class="container">
-    <p class="lock-per-pall">Steg 2 Tapp:</p>Stäng ventil till burkbana</p>
-</p>Öppna tömning av burbanan</p>
-</p>Stäng inmatning av burkar</p>
-</p>Nolla räkning</p>
-</p>Töm tappen (filler drain)</p> </div>
-
-<div class="container">
-    <p class="lock-per-pall">Steg 3 Mixer:</p>Aktivera knapp bredvid lampa (dränage manuellt.</p>
-</p>AVM315</p>
-</p>Hand, Stäng av, Flagga</p>
-</p>Cold rinse</p>
-</p>Aktivera med cirkulationspil</p> </div>
-
-<div class="container">
-<p class="lock-per-pall">Steg 4 Töm banorna:</p>Klicka tömning på panelen vid banorna och gå till slutet av banan och töm med golvskrapan</p> </div>
-<div class="container">
-    <p class="lock-per-pall">Steg 5 Tapp:</p>Stoppa filler drain</p>
-</p>Starta tapp, Flagga, H2O, Flagga </p>(Om omfärgad dryck körs kör cold rinse två ggr i både mixer och tapp)</p></div>
-
-<div class="container">
-    <p class="lock-per-pall">Steg 6 Dator:</p> Stoppa order
-Starta ny order
-Nolla första heuft och skriv upp</p></div>
-
-<div class="container">
-    <p class="lock-per-pall">Steg 7 Mixer:</p>Boken</p>
-</p>Välj recept, Springande gubbe,Välj rätt vatten genom stopp och vattensort </p>
-</p>När mixer är klar så välj in rätt tank syrup.</p>
-</p>Välj tank —> shift, Flagga, Product tank pressurize,Syrup tank preparation</p>
-</p>Tryck bort larm, Aktivera med cirkulationspil </p> </div>
-        <button onclick="completeStep(this)">Markera som genomfört</button>
+    <div class="mini-calculator" style="display: none;">
+        <div class="center-wrapper">
+            <input type="text" id="specificInput" placeholder="   Miniräknare">
+            <button id="miniCalculateButton" onclick="miniCalculate()">Beräkna</button>
+        </div>
     </div>
-
+    <div id="sleekInputs" style="display: none;">
+        <h2 id="syrupTitle" class="hidden">Syrup:</h2>
+        <input type="number" id="syrup" placeholder="Syrup i Liter" class="hidden"> <!-- Gömt inputfält -->
+        <div id="syrupValue" class="result-item"></div> <!-- Visa värdet istället för inputfält -->
+        <div>
+            <button class="ratio-button" onclick="setRatio(19.4)">Läsk 19.4</button>  
+            <button class="ratio-button" onclick="setRatio(20)">Zingo/Julmust/Pommac 20</button>
+            <button class="ratio-button" onclick="setRatio(15.5)">Mountain Dew 15.5</button>
+        </div>
+        <div class="center-wrapper"> <!-- Lägg till detta för att centrera input -->
+            <input type="number" id="stock" placeholder="  Antal lager i hissen" class="hidden">
+        </div>
+    </div>
+    <div id="beerInputs" style="display: none;">
+        <h2 id="beerTitle" class="hidden">Öl:</h2>
+        <input type="number" id="beerVolume" placeholder="Öl i Hektoliter" class="hidden"> <!-- Gömt inputfält -->
+        <div id="beerVolumeValue" class="result-item"></div> <!-- Visa värdet istället för inputfält -->
+        <div class="center-wrapper"> <!-- Lägg till detta för att centrera input -->
+            <input type="number" id="beerStock" placeholder="Antal lager i hissen" class="hidden">
+        </div>
+    </div>
+    <button id="calculateButton" onclick="toggleStockInput()">Beräkna resultat</button>
+    <div id="resultContainer">
+        <h2>Resultat:</h2>
+        <div id="result"></div>
+    </div>
+    <footer>
+        <p><span class="signature">KA</span></p>
+    </footer>
 </div>
 
-<script>
-document.querySelectorAll('.step').forEach(function(step) {
-    step.addEventListener('click', function() {
-        var content = this.nextElementSibling;
-        // Toggla synlighet för innehållet
-        if (content.style.display === "block" || content.style.display === "") {
-            content.style.display = "none";
+</div><script>
+let ratio = 0;
+
+function setRatio(value) {
+    ratio = value;
+}
+
+document.querySelectorAll(".drink-size").forEach(function(button) {
+    button.addEventListener("click", function() {
+        document.querySelectorAll(".drink-size").forEach(function(btn) {
+            btn.classList.remove("button-selected");
+        });
+        button.classList.add("button-selected");
+        document.getElementById("stock").classList.add("hidden");
+        document.getElementById("beerStock").classList.add("hidden");
+        document.getElementById("stock").style.display = "";
+        document.getElementById("beerStock").style.display = "";
+        var selectedSize = button.id;
+        if (selectedSize === "sleek" || selectedSize === "cl33" || selectedSize === "cl50") {
+            document.querySelector(".mini-calculator").style.display = "block";
         } else {
-            content.style.display = "block";
+            document.querySelector(".mini-calculator").style.display = "none";
+        }
+        if (selectedSize === "sleek") {
+            document.getElementById("sleekInputs").style.display = "block";
+            document.getElementById("beerInputs").style.display = "none";
+        } else {
+            document.getElementById("sleekInputs").style.display = "none";
+            document.getElementById("beerInputs").style.display = "block";
         }
     });
 });
 
-function completeStep(button) {
-    var content = button.parentElement;
-    var step = content.previousElementSibling;
-    step.classList.add('completed'); // Markera steget som slutfört
-    content.style.display = "none"; // Dölj innehållet
+function toggleStockInput() {
+    document.getElementById("stock").classList.remove("hidden");
+    document.getElementById("beerStock").classList.remove("hidden");
+    document.getElementById("stock").style.display = "block";
+    document.getElementById("beerStock").style.display = "block";
+    calculate();
+    scrollToResult();
+}
 
-    // Hitta och visa nästa stegs innehåll (valfritt baserat på din logik)
-    // Detta steg är valfritt och beror på om du vill att nästa steg automatiskt ska öppnas
-    var nextStep = step.nextElementSibling;
-    if (nextStep && nextStep.nextElementSibling) {
-        var nextContent = nextStep.nextElementSibling;
-        nextContent.style.display = "block";
+function calculate() {
+    var palletsLeftToDrive = 0;
+    var hectoliters = 0; // Variabel för att hålla volymen i hektoliter
+
+    var selectedSize = document.querySelector(".button-selected").id;
+    if (selectedSize === "sleek") {
+        var syrup = parseFloat(document.getElementById("syrup").value);
+        var stock = parseInt(document.getElementById("stock").value);
+
+        if (isNaN(syrup)) syrup = 0;
+        if (isNaN(stock)) stock = 0;
+
+        var totalBurkar = (syrup * ratio) - 2669 - (stock * 506);
+        palletsLeftToDrive = totalBurkar / 8602;
+        hectoliters = palletsLeftToDrive * 29; // 29 hektoliter per pall för "Sleek"
+
+        document.getElementById("syrupValue").innerHTML = syrup.toFixed(0) + " Liter";
+        document.getElementById("syrupTitle").classList.remove("hidden");
+    } else {
+        var beerVolume = parseFloat(document.getElementById("beerVolume").value);
+        var beerStock = parseInt(document.getElementById("beerStock").value);
+
+        if (isNaN(beerVolume)) beerVolume = 0;
+        if (isNaN(beerStock)) beerStock = 0;
+
+        var totalVolume = beerVolume - ((selectedSize === "cl33" ? 36 : 55) - 37) - (selectedSize === "cl33" ? 1.3 : 2) * beerStock;
+        palletsLeftToDrive = totalVolume / (selectedSize === "cl33" ? 29 : 30);
+        hectoliters = palletsLeftToDrive * (selectedSize === "cl33" ? 29 : 30);
+
+        document.getElementById("beerVolumeValue").innerHTML = beerVolume.toFixed(0) + " Hektoliter";
+        document.getElementById("beerTitle").classList.remove("hidden");
+    }
+
+    var result = "Antal pall kvar att köra: " + palletsLeftToDrive.toFixed(1) + "<br>Hektoliter: " + hectoliters.toFixed(1);
+    document.getElementById("result").innerHTML = result;
+    document.getElementById("resultContainer").style.display = "block";
+}
+
+function scrollToResult() {
+    var resultContainer = document.getElementById("resultContainer");
+    resultContainer.scrollIntoView({ behavior: 'smooth' });
+}
+
+function miniCalculate() {
+    var miniInput = document.getElementById("specificInput").value;
+    var parts = miniInput.split(/([+-])/).filter(Boolean);
+    var total = 0;
+    var currentOperation = '+';
+
+    for (var i = 0; i < parts.length; i++) {
+        var part = parts[i].trim();
+        if (part === "+" || part === "-") {
+            currentOperation = part;
+        } else {
+            var value = parseFloat(part);
+            if (!isNaN(value)) {
+                if (currentOperation === '+') {
+                    total += value;
+                } else {
+                    total -= value;
+                }
+            }
+        }
+    }
+
+    document.getElementById("specificInput").value = total.toString();
+
+    var selectedSize = document.querySelector(".button-selected").id;
+    if (selectedSize === "sleek") {
+        document.getElementById("syrup").value = total;
+        document.getElementById("syrupValue").innerHTML = total + " Liter";
+        document.getElementById("syrupTitle").classList.remove("hidden");
+    } else {
+        document.getElementById("beerVolume").value = total;
+        document.getElementById("beerVolumeValue").innerHTML = total + " Hektoliter";
+        document.getElementById("beerTitle").classList.remove("hidden");
     }
 }
+
 </script>
-
-
-
-
-
 </body>
 </html>
