@@ -213,6 +213,7 @@ margin-left: 10px;
         <button class="drink-size" id="sleek">Sleek</button>
         <button class="drink-size" id="cl33">33cl</button>
         <button class="drink-size" id="cl50">50cl</button>
+        <button class="drink-size" id="cider">Cider</button> <!-- Ny cider-knapp -->
     </div>
     <div class="mini-calculator" style="display: none;">
         <div class="center-wrapper">
@@ -251,7 +252,8 @@ margin-left: 10px;
     </footer>
 </div>
 
-</div><script>
+</div>
+<script>
 let ratio = 0;
 
 function setRatio(value) {
@@ -269,7 +271,7 @@ document.querySelectorAll(".drink-size").forEach(function(button) {
         document.getElementById("stock").style.display = "";
         document.getElementById("beerStock").style.display = "";
         var selectedSize = button.id;
-        if (selectedSize === "sleek" || selectedSize === "cl33" || selectedSize === "cl50") {
+        if (selectedSize === "sleek" || selectedSize === "cl33" || selectedSize === "cl50" || selectedSize === "cider") {
             document.querySelector(".mini-calculator").style.display = "block";
         } else {
             document.querySelector(".mini-calculator").style.display = "none";
@@ -311,6 +313,19 @@ function calculate() {
 
         document.getElementById("syrupValue").innerHTML = syrup.toFixed(0) + " Liter";
         document.getElementById("syrupTitle").classList.remove("hidden");
+    } else if (selectedSize === "cider") {  // Ciderlogik
+        var beerVolume = parseFloat(document.getElementById("beerVolume").value);
+        var beerStock = parseInt(document.getElementById("beerStock").value);
+
+        if (isNaN(beerVolume)) beerVolume = 0;
+        if (isNaN(beerStock)) beerStock = 0;
+
+        var totalVolume = beerVolume - (37) - (1.3 * beerStock); // Subtrahera 37 hektoliter
+        palletsLeftToDrive = totalVolume / 29;
+        hectoliters = palletsLeftToDrive * 29;
+
+        document.getElementById("beerVolumeValue").innerHTML = beerVolume.toFixed(0) + " Hektoliter";
+        document.getElementById("beerTitle").classList.remove("hidden");
     } else {
         var beerVolume = parseFloat(document.getElementById("beerVolume").value);
         var beerStock = parseInt(document.getElementById("beerStock").value);
