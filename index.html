@@ -225,11 +225,22 @@ margin-left: 10px;
         <h2 id="syrupTitle" class="hidden">Syrup:</h2>
         <input type="number" id="syrup" placeholder="Syrup i Liter" class="hidden"> <!-- Gömt inputfält -->
         <div id="syrupValue" class="result-item"></div> <!-- Visa värdet istället för inputfält -->
-        <div>
-            <button class="ratio-button" onclick="setRatio(19.4)">Läsk 19.4</button>  
-            <button class="ratio-button" onclick="setRatio(20)">Zingo/Julmust/Pommac 20</button>
-            <button class="ratio-button" onclick="setRatio(15.5)">Mountain Dew 15.5</button>
-        </div>
+   <div>
+    <button class="ratio-button" onclick="setRatio(19.4)">Läsk 19.4</button>  
+    <button class="ratio-button" onclick="setRatio(20)">Zingo/Julmust/Pommac 20</button>
+    <button class="ratio-button" onclick="setRatio(15.5)">Mountain Dew 15.5</button>
+    
+    <!-- Schweppes huvudknapp som uppdateras med valt alternativ -->
+    <button id="schweppesButton" class="ratio-button" onclick="toggleDropdown()">Schweppes</button>
+    
+    <!-- Dropdown-meny för Schweppes-alternativ -->
+    <div id="schweppesDropdown" style="display: none; margin-left: 20px;">
+        <button class="ratio-button" onclick="setRatio(3.92, 'Indien tonic')">Indien tonic 3.92</button>
+        <button class="ratio-button" onclick="setRatio(4.88, 'Lemon')">Lemon 4.88</button>
+        <button class="ratio-button" onclick="setRatio(3.85, 'Citrus fruit')">Citrus fruit 3.85</button>
+        <button class="ratio-button" onclick="setRatio(4.85, 'Pink tonic')">Pink tonic 4.85</button>
+    </div>
+</div>
         <div class="center-wrapper"> <!-- Lägg till detta för att centrera input -->
             <input type="number" id="stock" placeholder="  Antal lager i hissen" class="hidden">
         </div>
@@ -387,6 +398,25 @@ function miniCalculate() {
     }
 }
 
+function setRatio(value, drinkName = "") {
+    ratio = value;
+    document.getElementById("schweppesDropdown").style.display = "none"; // Stäng dropdown efter val
+
+    // Om drinkName är tomt (dvs. inte från Schweppes-menyn), återställ Schweppes-knappen
+    if (drinkName === "") {
+        document.getElementById("schweppesButton").innerText = "Schweppes";
+    } else {
+        // Annars uppdatera texten på Schweppes-knappen med det valda dryckesnamnet
+        document.getElementById("schweppesButton").innerText = "Schweppes - " + drinkName;
+    }
+
+    console.log("Blandningsförhållande satt till:", value); // För kontroll
+}
+
+function toggleDropdown() {
+    var dropdown = document.getElementById("schweppesDropdown");
+    dropdown.style.display = dropdown.style.display === "none" ? "block" : "none";
+}
 </script>
 </body>
 </html>
